@@ -1,3 +1,4 @@
+// Student.js
 import React, { useState } from "react";
 import { loadAssignments, saveAssignments, STATUS } from "../../utils/storage";
 
@@ -19,17 +20,21 @@ export default function Student() {
   };
 
   return (
-    <div className="p-4">
-      <h2>Student Dashboard</h2>
-      <input type="file" onChange={(e) => setFile(e.target.files[0])} />
-      <button onClick={handleUpload}>Upload</button>
-      <ul>
-        {assignments.map((a) => (
-          <li key={a.id}>
-            {a.fileName} - <b>{a.status}</b>
-          </li>
-        ))}
-      </ul>
+    <div className="card">
+      <div className="card-header">Student Dashboard</div>
+      <div className="card-body">
+        <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+        <button onClick={handleUpload} className="btn btn-primary ml-2">
+          Upload
+        </button>
+        <ul>
+          {assignments.map((a) => (
+            <li key={a.id}>
+              {a.fileName} - <b>{a.status}</b>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,64 @@
+/* App.css */
+body {
+  font-family: "Arial", sans-serif;
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.sidebar {
+  background-color: #6d2ff4;
+  color: #ffffff;
+  padding: 20px;
+  height: 100vh;
+}
+
+.sidebar .nav-link {
+  color: #ffffff;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.sidebar .nav-link:hover,
+.nav-link:active {
+  color: #000;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #fff;
+}
+
+.content {
+  background-color: #ffffff;
+  padding: 20px;
+  flex: 1;
+}
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid #6d2ff4;
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.card-header {
+  background-color: #6d2ff4;
+  color: #ffffff;
+  padding: 10px;
+  font-weight: bold;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.card-body {
+  padding: 15px;
+}
+
+.btn-primary {
+  background-color: #6d2ff4;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #5b27d1;
+}

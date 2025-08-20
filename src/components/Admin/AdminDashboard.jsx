@@ -1,3 +1,4 @@
+// Admin.js
 import React, { useState } from "react";
 import { loadAssignments, saveAssignments, STATUS } from "../../utils/storage";
 
@@ -13,23 +14,29 @@ export default function Admin() {
   };
 
   return (
-    <div className="p-4">
-      <h2>Admin Dashboard</h2>
-      <ul>
-        {assignments.map((a) => (
-          <li key={a.id}>
-            {a.fileName} - <b>{a.status}</b>
-            <button onClick={() => updateStatus(a.id, STATUS.ACCEPTED)}>
-              Accept
-            </button>
-            <button
-              onClick={() => updateStatus(a.id, STATUS.REVISION_REQUIRED)}
-            >
-              Refacere
-            </button>
-          </li>
-        ))}
-      </ul>
+    <div className="card">
+      <div className="card-header">Admin Dashboard</div>
+      <div className="card-body">
+        <ul>
+          {assignments.map((a) => (
+            <li key={a.id}>
+              {a.fileName} - <b>{a.status}</b>
+              <button
+                onClick={() => updateStatus(a.id, STATUS.ACCEPTED)}
+                className="btn btn-primary ml-2"
+              >
+                Accept
+              </button>
+              <button
+                onClick={() => updateStatus(a.id, STATUS.REVISION_REQUIRED)}
+                className="btn btn-danger ml-2"
+              >
+                Refacere
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
