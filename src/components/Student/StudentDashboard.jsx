@@ -99,7 +99,7 @@ export default function Student() {
     <div className="container mt-3">
       <h2 className="text-center mb-4">👩‍🎓 Student Dashboard</h2>
 
-      {/* Creare tema noua */}
+      {/* Creare o tema noua */}
       {assignments.every((a) => a.status === STATUS.ACCEPTED) && (
         <div className="card mb-4 p-3 border-primary">
           <h5>📝 Submit New Assignment</h5>
