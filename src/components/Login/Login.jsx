@@ -103,7 +103,9 @@ export default function AuthPage({ onLogin }) {
       console.log("User groups:", groups);
 
       // Determine role based on groups
-      const role = groups.includes("teacher") ? "teacher" : "student";
+      const role = groups.some((g) => g.toLowerCase() === "teacher")
+        ? "teacher"
+        : "student";
       console.log("Determined role:", role);
 
       // Call the onLogin callback
