@@ -1,0 +1,10 @@
+{
+  "resourceName": "Assignments",
+  "tableName": "Assignments",
+  "partitionKey": {
+    "fieldName": "Name",
+    "fieldType": "string"
+  },
+  "gsi": [],
+  "triggerFunctions": []
+}

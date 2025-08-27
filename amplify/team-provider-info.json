@@ -14,6 +14,18 @@
     "categories": {
       "auth": {
         "inspireplatformb6ce8c68": {}
+      },
+      "function": {
+        "assignmentsFunction": {
+          "deploymentBucketName": "amplify-inspireplatform-dev-164007-deployment",
+          "s3Key": "amplify-builds/assignmentsFunction-7335466b514531597374-build.zip"
+        }
+      },
+      "storage": {
+        "Assignments": {}
+      },
+      "api": {
+        "assignmentsAPI": {}
       }
     }
   }
