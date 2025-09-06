@@ -1,37 +1,68 @@
+// src/components/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import {
-  loadAssignments,
-  addComment,
-  updateAssignment,
-  STATUS,
-} from "../../utils/storage";
+import { getAssignments, updateAssignment } from "../../utils/api";
+
+export const STATUS = {
+  SUBMITTED: "SUBMITTED",
+  ACCEPTED: "ACCEPTED",
+  REVISION_REQUIRED: "REVISION_REQUIRED",
+};
 
 export default function Admin() {
   const [assignments, setAssignments] = useState([]);
   const [commentsInput, setCommentsInput] = useState({});
 
+  // încarcă toate assignments din API
   useEffect(() => {
-    setAssignments(loadAssignments());
+    const load = async () => {
+      try {
+        const all = await getAssignments();
+        setAssignments(all);
+      } catch (err) {
+        console.error("Failed to fetch assignments:", err);
+      }
+    };
+    load();
   }, []);
 
-  const handleAddComment = (assignmentId) => {
-    const message = commentsInput[assignmentId]?.trim();
+  // adaugă un comentariu și face update în DB
+  const handleAddComment = async (assignment) => {
+    const message = commentsInput[assignment.Name]?.trim();
     if (!message) return;
 
-    const comment = {
+    const newComment = {
       id: Date.now(),
       user: "Admin",
       message,
       timestamp: new Date().toISOString(),
     };
-    const updated = addComment(assignmentId, comment);
-    setAssignments(updated);
-    setCommentsInput((prev) => ({ ...prev, [assignmentId]: "" }));
+
+    const updatedAssignment = {
+      ...assignment,
+      comments: [...(assignment.comments || []), newComment],
+    };
+
+    try {
+      await updateAssignment(updatedAssignment);
+      const all = await getAssignments();
+      setAssignments(all);
+      setCommentsInput((prev) => ({ ...prev, [assignment.Name]: "" }));
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    }
   };
 
-  const updateStatus = (assignmentId, status) => {
-    const updated = updateAssignment(assignmentId, { status });
-    setAssignments(updated);
+  // update status assignment
+  const updateStatus = async (assignment, status) => {
+    const updatedAssignment = { ...assignment, status };
+
+    try {
+      await updateAssignment(updatedAssignment);
+      const all = await getAssignments();
+      setAssignments(all);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    }
   };
 
   const pendingAssignments = assignments.filter(
@@ -48,7 +79,7 @@ export default function Admin() {
         </div>
       ) : (
         pendingAssignments.map((a) => (
-          <div key={a.id} className="card mb-3 p-3 border-primary">
+          <div key={a.Name} className="card mb-3 p-3 border-primary">
             <span
               className={`badge bg-${
                 a.status === STATUS.ACCEPTED
@@ -67,14 +98,14 @@ export default function Admin() {
               <b>Uploaded by:</b> {a.uploadedBy || "Unknown student"}
             </p>
 
-            {/* Conversatie */}
+            {/* Conversație */}
             <div className="mt-2">
               <strong>Conversation:</strong>
               <div
                 className="bg-light p-2 rounded"
                 style={{ maxHeight: "150px", overflowY: "auto" }}
               >
-                {a.comments.map((c) => (
+                {a.comments?.map((c) => (
                   <div key={c.id}>
                     <b>{c.user}:</b> {c.message}{" "}
                     <small>{new Date(c.timestamp).toLocaleTimeString()}</small>
@@ -85,17 +116,17 @@ export default function Admin() {
               <input
                 className="form-control mt-2"
                 placeholder="Type your comment..."
-                value={commentsInput[a.id] || ""}
+                value={commentsInput[a.Name] || ""}
                 onChange={(e) =>
                   setCommentsInput((prev) => ({
                     ...prev,
-                    [a.id]: e.target.value,
+                    [a.Name]: e.target.value,
                   }))
                 }
               />
               <button
                 className="btn btn-sm btn-primary mt-1"
-                onClick={() => handleAddComment(a.id)}
+                onClick={() => handleAddComment(a)}
               >
                 Send
               </button>
@@ -104,13 +135,13 @@ export default function Admin() {
             <div className="mt-2">
               <button
                 className="btn btn-sm btn-success me-2"
-                onClick={() => updateStatus(a.id, STATUS.ACCEPTED)}
+                onClick={() => updateStatus(a, STATUS.ACCEPTED)}
               >
                 ✅ Accept
               </button>
               <button
                 className="btn btn-sm btn-danger"
-                onClick={() => updateStatus(a.id, STATUS.REVISION_REQUIRED)}
+                onClick={() => updateStatus(a, STATUS.REVISION_REQUIRED)}
               >
                 🔄 Revision
               </button>
