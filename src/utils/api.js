@@ -1,82 +1,96 @@
 // src/utils/api.js
-import { getAuthToken } from "./auth";
-
-const API_URL = "https://e5llhw03bf.execute-api.eu-north-1.amazonaws.com/dev"; // înlocuiește cu al tău dacă diferă
+const API_URL = process.env.REACT_APP_API_URL; // Variabila de mediu
+console.log("APIURL", API_URL);
+// Ajută la debug: verifică dacă URL-ul e setat
+if (!API_URL) {
+  console.error("REACT_APP_API_URL nu este setat. Verifică .env!");
+}
 
 // GET - ia toate assignments
 export async function getAssignments() {
-  const token = await getAuthToken();
-  if (!token) throw new Error("No auth token found");
-
   const res = await fetch(`${API_URL}/api`, {
     method: "GET",
     headers: {
-      Authorization: token, // trimite tokenul Cognito
+      "Content-Type": "application/json",
     },
   });
 
-  if (!res.ok) throw new Error("Failed to fetch assignments");
-  return res.json();
+  const text = await res.text(); // citește răspunsul ca text
+  try {
+    return JSON.parse(text); // încearcă să parsezi JSON
+  } catch (err) {
+    console.error("Răspuns invalid JSON:", text);
+    throw new Error("Failed to fetch assignments (invalid JSON)");
+  }
 }
 
 // POST - creează un assignment nou
 export async function createAssignment(assignment) {
-  const token = await getAuthToken();
-  if (!token) throw new Error("No auth token found");
-
   const res = await fetch(`${API_URL}/api`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: token,
     },
     body: JSON.stringify(assignment),
   });
 
-  if (!res.ok) throw new Error("Failed to create assignment");
-  return res.json();
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Răspuns invalid JSON:", text);
+    throw new Error("Failed to create assignment (invalid JSON)");
+  }
 }
 
 // PUT - update assignment
 export async function updateAssignment(assignment) {
-  const token = await getAuthToken();
-  if (!token) throw new Error("No auth token found");
-
   const res = await fetch(`${API_URL}/api`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      Authorization: token,
     },
     body: JSON.stringify(assignment),
   });
 
-  if (!res.ok) throw new Error("Failed to update assignment");
-  return res.json();
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Răspuns invalid JSON:", text);
+    throw new Error("Failed to update assignment (invalid JSON)");
+  }
 }
 
-// DELETE - șterge assignment
-export async function deleteAssignment(name) {
-  const token = await getAuthToken();
-  if (!token) throw new Error("No auth token found");
-
-  const res = await fetch(`${API_URL}/api/object/${name}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: token,
-    },
-  });
-
-  if (!res.ok) throw new Error("Failed to delete assignment");
-  return res.json();
-}
-
+// POST - adaugă comentariu
 export async function addCommentApi(Name, user, message) {
   const res = await fetch(`${API_URL}/api/${Name}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user, message }),
   });
-  if (!res.ok) throw new Error("Failed to add comment");
-  return res.json();
+
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Răspuns invalid JSON:", text);
+    throw new Error("Failed to add comment (invalid JSON)");
+  }
+}
+
+// DELETE - șterge assignment
+export async function deleteAssignment(Name) {
+  const res = await fetch(`${API_URL}/api/${Name}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    console.error("Răspuns invalid JSON:", text);
+    throw new Error("Failed to delete assignment (invalid JSON)");
+  }
 }
