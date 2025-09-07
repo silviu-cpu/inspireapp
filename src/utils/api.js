@@ -70,3 +70,13 @@ export async function deleteAssignment(name) {
   if (!res.ok) throw new Error("Failed to delete assignment");
   return res.json();
 }
+
+export async function addCommentApi(Name, user, message) {
+  const res = await fetch(`${API_URL}/api/${Name}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user, message }),
+  });
+  if (!res.ok) throw new Error("Failed to add comment");
+  return res.json();
+}

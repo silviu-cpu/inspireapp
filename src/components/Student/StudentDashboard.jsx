@@ -1,5 +1,10 @@
+// src/components/Student/StudentDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { createAssignment, getAssignments } from "../../utils/api";
+import {
+  createAssignment,
+  getAssignments,
+  addCommentApi,
+} from "../../utils/api";
 
 export default function Student() {
   const [assignments, setAssignments] = useState([]);
@@ -15,8 +20,12 @@ export default function Student() {
 
     // ia doar temele user-ului logat
     const load = async () => {
-      const all = await getAssignments();
-      setAssignments(all.filter((a) => a.uploadedBy === userEmail));
+      try {
+        const all = await getAssignments();
+        setAssignments(all.filter((a) => a.uploadedBy === userEmail));
+      } catch (err) {
+        console.error("Failed to load assignments:", err);
+      }
     };
     load();
   }, []);
@@ -37,14 +46,29 @@ export default function Student() {
       uploadedAt: new Date().toISOString(),
     };
 
-    await createAssignment(assignment);
+    try {
+      await createAssignment(assignment);
+      const all = await getAssignments();
+      setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+      setAssignmentTitle("");
+      setNewAssignment("");
+    } catch (err) {
+      console.error("Failed to create assignment:", err);
+    }
+  };
 
-    // reîncarcă temele după submit
-    const all = await getAssignments();
-    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+  const handleAddComment = async (assignment) => {
+    const message = commentsInput[assignment.Name]?.trim();
+    if (!message) return;
 
-    setAssignmentTitle("");
-    setNewAssignment("");
+    try {
+      await addCommentApi(assignment.Name, currentUser, message);
+      const all = await getAssignments();
+      setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+      setCommentsInput((prev) => ({ ...prev, [assignment.Name]: "" }));
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    }
   };
 
   return (
@@ -108,6 +132,24 @@ export default function Student() {
                 </div>
               ))}
             </div>
+
+            <input
+              className="form-control mt-2"
+              placeholder="Type your comment..."
+              value={commentsInput[a.Name] || ""}
+              onChange={(e) =>
+                setCommentsInput((prev) => ({
+                  ...prev,
+                  [a.Name]: e.target.value,
+                }))
+              }
+            />
+            <button
+              className="btn btn-sm btn-primary mt-1"
+              onClick={() => handleAddComment(a)}
+            >
+              Send
+            </button>
           </div>
         </div>
       ))}

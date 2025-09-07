@@ -18,7 +18,7 @@
       "function": {
         "assignmentsFunction": {
           "deploymentBucketName": "amplify-inspireplatform-dev-164007-deployment",
-          "s3Key": "amplify-builds/assignmentsFunction-7335466b514531597374-build.zip"
+          "s3Key": "amplify-builds/assignmentsFunction-6b2b4275594467334763-build.zip"
         }
       },
       "storage": {

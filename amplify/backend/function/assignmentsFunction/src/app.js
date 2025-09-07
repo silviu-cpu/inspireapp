@@ -133,20 +133,23 @@ app.post(`${path}/:Name/comments`, async (req, res) => {
  * PUT update assignment (content/status)
  ************************************/
 app.put(path, async (req, res) => {
-  const { Name, title, content, status } = req.body;
+  const { Name, title, content, status, comments } = req.body;
 
   try {
+    // Ia item-ul curent
     const data = await ddbDocClient.send(
       new GetCommand({ TableName: tableName, Key: { Name } })
     );
     if (!data.Item)
       return res.status(404).json({ error: "Assignment not found" });
 
+    // Actualizează doar câmpurile trimise în body
     const updatedItem = {
       ...data.Item,
-      title: title || data.Item.title,
-      content: content || data.Item.content,
-      status: status || data.Item.status,
+      title: title ?? data.Item.title,
+      content: content ?? data.Item.content,
+      status: status ?? data.Item.status,
+      comments: comments ?? data.Item.comments, //  păstrăm comments
     };
 
     await ddbDocClient.send(
@@ -157,7 +160,6 @@ app.put(path, async (req, res) => {
     res.status(500).json({ error: "Could not update item: " + err.message });
   }
 });
-
 /************************************
  * DELETE assignment
  ************************************/
