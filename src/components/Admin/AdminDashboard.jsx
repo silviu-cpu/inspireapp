@@ -1,6 +1,10 @@
 // src/components/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { getAssignments, updateAssignment } from "../../utils/api";
+import {
+  getAssignments,
+  addCommentApi,
+  updateAssignment,
+} from "../../utils/api";
 
 export const STATUS = {
   SUBMITTED: "SUBMITTED",
@@ -30,21 +34,9 @@ export default function Admin() {
     const message = commentsInput[assignment.Name]?.trim();
     if (!message) return;
 
-    const newComment = {
-      id: Date.now(),
-      user: "Admin",
-      message,
-      timestamp: new Date().toISOString(),
-    };
-
-    const updatedAssignment = {
-      ...assignment,
-      comments: [...(assignment.comments || []), newComment],
-    };
-
     try {
-      await updateAssignment(updatedAssignment);
-      const all = await getAssignments();
+      await addCommentApi(assignment.Name, "Admin", message);
+      const all = await getAssignments(); // reîncarcă assignments
       setAssignments(all);
       setCommentsInput((prev) => ({ ...prev, [assignment.Name]: "" }));
     } catch (err) {

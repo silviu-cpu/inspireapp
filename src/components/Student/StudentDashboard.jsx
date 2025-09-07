@@ -1,10 +1,16 @@
-// src/components/Student/StudentDashboard.jsx
+// src/components/Student/Student.jsx
 import React, { useState, useEffect } from "react";
 import {
   createAssignment,
   getAssignments,
-  addCommentApi,
+  updateAssignment,
 } from "../../utils/api";
+
+export const STATUS = {
+  SUBMITTED: "SUBMITTED",
+  ACCEPTED: "ACCEPTED",
+  REVISION_REQUIRED: "REVISION_REQUIRED",
+};
 
 export default function Student() {
   const [assignments, setAssignments] = useState([]);
@@ -13,23 +19,25 @@ export default function Student() {
   const [commentsInput, setCommentsInput] = useState({});
   const [currentUser, setCurrentUser] = useState("");
 
+  // încarcă assignments doar pentru studentul logat
   useEffect(() => {
     const userEmail = localStorage.getItem("currentUser");
     if (!userEmail) return;
     setCurrentUser(userEmail);
 
-    // ia doar temele user-ului logat
     const load = async () => {
-      try {
-        const all = await getAssignments();
-        setAssignments(all.filter((a) => a.uploadedBy === userEmail));
-      } catch (err) {
-        console.error("Failed to load assignments:", err);
-      }
+      const all = await getAssignments();
+      const userAssignments = all
+        .filter((a) => a.uploadedBy === userEmail)
+        .sort(
+          (a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt) // cele mai recente primele
+        );
+      setAssignments(userAssignments);
     };
     load();
   }, []);
 
+  // crează assignment nou
   const handleCreateAssignment = async () => {
     if (!assignmentTitle.trim() || !newAssignment.trim()) {
       alert("Please enter both title and content.");
@@ -37,45 +45,63 @@ export default function Student() {
     }
 
     const assignment = {
-      Name: Date.now().toString(), // DynamoDB PK
+      Name: Date.now().toString(), // PK în DynamoDB
       title: assignmentTitle.trim(),
       content: newAssignment.trim(),
       uploadedBy: currentUser,
-      status: "SUBMITTED",
+      status: STATUS.SUBMITTED,
       comments: [],
       uploadedAt: new Date().toISOString(),
     };
 
-    try {
-      await createAssignment(assignment);
-      const all = await getAssignments();
-      setAssignments(all.filter((a) => a.uploadedBy === currentUser));
-      setAssignmentTitle("");
-      setNewAssignment("");
-    } catch (err) {
-      console.error("Failed to create assignment:", err);
-    }
+    await createAssignment(assignment);
+    const all = await getAssignments();
+    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+
+    setAssignmentTitle("");
+    setNewAssignment("");
   };
 
+  // adaugă comentariu
   const handleAddComment = async (assignment) => {
     const message = commentsInput[assignment.Name]?.trim();
     if (!message) return;
 
-    try {
-      await addCommentApi(assignment.Name, currentUser, message);
-      const all = await getAssignments();
-      setAssignments(all.filter((a) => a.uploadedBy === currentUser));
-      setCommentsInput((prev) => ({ ...prev, [assignment.Name]: "" }));
-    } catch (err) {
-      console.error("Failed to add comment:", err);
-    }
+    const newComment = {
+      id: Date.now(),
+      user: currentUser,
+      message,
+      timestamp: new Date().toISOString(),
+    };
+
+    const updatedAssignment = {
+      ...assignment,
+      comments: [...(assignment.comments || []), newComment],
+    };
+
+    await updateAssignment(updatedAssignment);
+    const all = await getAssignments();
+    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+    setCommentsInput((prev) => ({ ...prev, [assignment.Name]: "" }));
+  };
+
+  // update assignment după revizie
+  const handleUpdateAssignment = async (assignment) => {
+    const updatedAssignment = {
+      ...assignment,
+      status: STATUS.SUBMITTED, // resetează la SUBMITTED după edit
+    };
+    await updateAssignment(updatedAssignment);
+
+    const all = await getAssignments();
+    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
   };
 
   return (
     <div className="container mt-3">
       <h2 className="text-center mb-4">👩‍🎓 Student Dashboard</h2>
 
-      {/* Creare o temă nouă */}
+      {/* Creare temă nouă */}
       <div className="card mb-4 p-3 border-primary">
         <h5>📝 Submit New Assignment</h5>
         <div className="mb-2">
@@ -104,9 +130,9 @@ export default function Student() {
           <h5>{a.title}</h5>
           <span
             className={`badge bg-${
-              a.status === "ACCEPTED"
+              a.status === STATUS.ACCEPTED
                 ? "success"
-                : a.status === "REVISION_REQUIRED"
+                : a.status === STATUS.REVISION_REQUIRED
                 ? "danger"
                 : "warning"
             }`}
@@ -151,6 +177,46 @@ export default function Student() {
               Send
             </button>
           </div>
+
+          {/* Edit assignment dacă necesită revizie */}
+          {a.status === STATUS.REVISION_REQUIRED && (
+            <div className="mt-3">
+              <h6>🔄 Revise Assignment</h6>
+              <input
+                className="form-control mb-2"
+                value={a.title}
+                onChange={(e) =>
+                  setAssignments((prev) =>
+                    prev.map((item) =>
+                      item.Name === a.Name
+                        ? { ...item, title: e.target.value }
+                        : item
+                    )
+                  )
+                }
+              />
+              <textarea
+                className="form-control mb-2"
+                rows="3"
+                value={a.content}
+                onChange={(e) =>
+                  setAssignments((prev) =>
+                    prev.map((item) =>
+                      item.Name === a.Name
+                        ? { ...item, content: e.target.value }
+                        : item
+                    )
+                  )
+                }
+              />
+              <button
+                className="btn btn-warning"
+                onClick={() => handleUpdateAssignment(a)}
+              >
+                Update Assignment
+              </button>
+            </div>
+          )}
         </div>
       ))}
     </div>
