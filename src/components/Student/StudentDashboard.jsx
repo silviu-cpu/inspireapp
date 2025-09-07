@@ -17,9 +17,9 @@ export default function Student() {
   const [assignmentTitle, setAssignmentTitle] = useState("");
   const [newAssignment, setNewAssignment] = useState("");
   const [commentsInput, setCommentsInput] = useState({});
+  const [editAssignments, setEditAssignments] = useState({});
   const [currentUser, setCurrentUser] = useState("");
 
-  // încarcă assignments doar pentru studentul logat
   useEffect(() => {
     const userEmail = localStorage.getItem("currentUser");
     if (!userEmail) return;
@@ -29,15 +29,12 @@ export default function Student() {
       const all = await getAssignments();
       const userAssignments = all
         .filter((a) => a.uploadedBy === userEmail)
-        .sort(
-          (a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt) // cele mai recente primele
-        );
+        .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
       setAssignments(userAssignments);
     };
     load();
   }, []);
 
-  // crează assignment nou
   const handleCreateAssignment = async () => {
     if (!assignmentTitle.trim() || !newAssignment.trim()) {
       alert("Please enter both title and content.");
@@ -45,7 +42,7 @@ export default function Student() {
     }
 
     const assignment = {
-      Name: Date.now().toString(), // PK în DynamoDB
+      Name: Date.now().toString(),
       title: assignmentTitle.trim(),
       content: newAssignment.trim(),
       uploadedBy: currentUser,
@@ -55,14 +52,18 @@ export default function Student() {
     };
 
     await createAssignment(assignment);
+
     const all = await getAssignments();
-    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+    setAssignments(
+      all
+        .filter((a) => a.uploadedBy === currentUser)
+        .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
+    );
 
     setAssignmentTitle("");
     setNewAssignment("");
   };
 
-  // adaugă comentariu
   const handleAddComment = async (assignment) => {
     const message = commentsInput[assignment.Name]?.trim();
     if (!message) return;
@@ -80,21 +81,32 @@ export default function Student() {
     };
 
     await updateAssignment(updatedAssignment);
-    const all = await getAssignments();
-    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+
+    setAssignments((prev) =>
+      prev.map((a) =>
+        a.Name === assignment.Name ? { ...updatedAssignment } : a
+      )
+    );
     setCommentsInput((prev) => ({ ...prev, [assignment.Name]: "" }));
   };
 
-  // update assignment după revizie
   const handleUpdateAssignment = async (assignment) => {
     const updatedAssignment = {
       ...assignment,
-      status: STATUS.SUBMITTED, // resetează la SUBMITTED după edit
+      title: editAssignments[assignment.Name]?.title ?? assignment.title,
+      content: editAssignments[assignment.Name]?.content ?? assignment.content,
+      status: STATUS.SUBMITTED,
     };
+
     await updateAssignment(updatedAssignment);
 
-    const all = await getAssignments();
-    setAssignments(all.filter((a) => a.uploadedBy === currentUser));
+    setAssignments((prev) =>
+      prev
+        .map((a) => (a.Name === assignment.Name ? updatedAssignment : a))
+        .sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))
+    );
+
+    setEditAssignments((prev) => ({ ...prev, [assignment.Name]: {} }));
   };
 
   return (
@@ -184,29 +196,29 @@ export default function Student() {
               <h6>🔄 Revise Assignment</h6>
               <input
                 className="form-control mb-2"
-                value={a.title}
+                value={editAssignments[a.Name]?.title ?? a.title}
                 onChange={(e) =>
-                  setAssignments((prev) =>
-                    prev.map((item) =>
-                      item.Name === a.Name
-                        ? { ...item, title: e.target.value }
-                        : item
-                    )
-                  )
+                  setEditAssignments((prev) => ({
+                    ...prev,
+                    [a.Name]: {
+                      ...(prev[a.Name] || {}),
+                      title: e.target.value,
+                    },
+                  }))
                 }
               />
               <textarea
                 className="form-control mb-2"
                 rows="3"
-                value={a.content}
+                value={editAssignments[a.Name]?.content ?? a.content}
                 onChange={(e) =>
-                  setAssignments((prev) =>
-                    prev.map((item) =>
-                      item.Name === a.Name
-                        ? { ...item, content: e.target.value }
-                        : item
-                    )
-                  )
+                  setEditAssignments((prev) => ({
+                    ...prev,
+                    [a.Name]: {
+                      ...(prev[a.Name] || {}),
+                      content: e.target.value,
+                    },
+                  }))
                 }
               />
               <button
